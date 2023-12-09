@@ -1,9 +1,9 @@
 import input_data
 from collections import Counter
+from functools import total_ordering, cmp_to_key
 
 """
 Map cards to base 16 - hex. then we can use a simple compare between hands of the same type.
-We still need a function to rank the hand types
 A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2
 E, D, C, B, A, 9, 8, 7, 6, 5, 4, 3, 2
 """
@@ -22,30 +22,12 @@ def map_card_to_hex(card_str: str) -> str:
     return hex_str
 
 
-def get_max_char_count(card_str: str) -> int:
-    # returns the max number of any character in the given string
-    # using collections.Counter() + max() to get
-    # Maximum frequency character in String
-    res = Counter(card_str)
-    return max(res, key=res.get)
-
-
-def get_count_by_char(card_str: str) -> dict:
-    # return a dictionary where the key is the number of entries and the value is a list of all characters that have that count
-    # char_counts = {}
-    # summary_counts = {}
-    # for char in card_str:
-    #     if not char_counts.get(char):
-    #         char_counts[char] =
-    count = Counter(card_str)
-    print(count)
-
-
+# Total ordering fills in the remaining comparison operators as long as we specify at least one.
+@total_ordering
 class Hand(object):
     def __init__(self, text, value) -> None:
         self.text = text
         self.value = value
-        self.hex_str = map_card_to_hex(text)
 
     def get_hand_type_rank(self) -> int:
         # get an integer representing the hand rank where 0 is the highest and is a 5 of a kind
@@ -82,6 +64,43 @@ class Hand(object):
         else:
             return 6
 
+    # for total ordering, we must define one of __lt__(), __le__(), __gt__(), or __ge__()
+    def __gt__(self, __value: object) -> bool:
+        # test if the other hand is greater value than this hand
+        # returns true if self greater than other hand.
+        # Note that lower rank if more valuable
+        self_rank = self.get_hand_type_rank()
+        other_rank = __value.get_hand_type_rank()
+        if self_rank < other_rank:
+            return True
+        elif self_rank > other_rank:
+            return False
+        else:
+            # ranks are equal
+            # do a string comparison and find which of the first card has the higher rank.
+            # use a hex conversion to make this easier
+            self_hex_str = map_card_to_hex(self.text)
+            self_hex_val = int(self_hex_str, 16)
+
+            other_hex_str = map_card_to_hex(__value.text)
+            other_hex_val = int(other_hex_str, 16)
+            if self_hex_val > other_hex_val:
+                return True
+            else:
+                return False
+
+    def __eq__(self, __value: object) -> bool:
+        return self.text == __value.text
+
+    def compare(self, __value: object) -> int:
+        # for comparing one hand vs another to sort lists
+        if self > __value:
+            return 1
+        elif self < __value:
+            return -1
+        else:
+            return 0
+
 
 def get_translated_data(raw_data: str) -> list:
     ret_list = []
@@ -96,13 +115,48 @@ def get_translated_data(raw_data: str) -> list:
     return ret_list
 
 
-def do_part_one(hand_data):
+def get_hand_data(raw_data: str) -> list[Hand]:
+    ret_list = []
+    for line in raw_data.strip().splitlines():
+        split_line = line.split()
+        hand_text = split_line[0]
+        hand_value = int(split_line[1])
+        ret_list.append(Hand(hand_text, hand_value))
+
+    return ret_list
+
+
+def do_test():
+    h1 = Hand("AAAAA", 2)
+    h2 = Hand("AAAAK", 2)
+    h3 = Hand("AAAKK", 2)
+    h4 = Hand("AAKKK", 2)
+    h5 = Hand("22334", 2)
+    h6 = Hand("33224", 2)
+    h7 = Hand("33214", 2)
+    h8 = Hand("33214", 3)
+    # All should print True
+    print(h1 > h2)
+    print(h2 < h1)
+    print(h2 > h3)
+    print(h3 > h4)
+    print(h5 < h6)
+    print(h6 > h7)
+    print(h7 == h8)
+
+
+def do_part_one(hand_data: list):
     # strategy - map the inputs to hex strings and store the string and the value in a dictionary.
     # this way we can use built-in comparison methods to sort values of the same type.
     # TDB how we sort the hands. We could do something where we prepend a leading value to help with
     # the sorting.
-    for hand in hand_data:
-        print(get_count_by_char(hand[0]))
+    sorted_hand = sorted(
+        hand_data,
+        key=cmp_to_key(lambda item1, item2: item1.compare(item2)),
+        reverse=True,
+    )
+    for idx, hand in enumerate(sorted_hand):
+        print(idx, hand.text, hand.value)
 
 
 def do_part_two():
@@ -129,6 +183,8 @@ If two hands have the same type, a second ordering rule takes effect. Start by c
 
 
 if __name__ == "__main__":
-    data_set = get_translated_data(input_data.day7_test_input)
-    do_part_one(data_set)
+    # data_set = get_translated_data(input_data.day7_test_input)
+    do_test()
+    hand_data = get_hand_data(input_data.day7_test_input)
+    do_part_one(hand_data)
     # do_part_two()  # in progress
