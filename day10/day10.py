@@ -155,6 +155,13 @@ def get_tree_depth(tree):
         return 1 + get_tree_depth(tree.children[0])
 
 
+def tree_to_list(tree) -> list:
+    if len(tree.children) == 0:
+        return [tree.pipe]
+    else:
+        return tree_to_list(tree.children[0]) + [tree.pipe]
+
+
 def do_part_one(data_set):
     start = find_start(data_set)
     print(f"Found start at {start}")
@@ -166,14 +173,84 @@ def do_part_one(data_set):
     print((depth + 1) / 2)
 
 
+def printmap(map: list[list]):
+    for row in map:
+        line_str = ""
+        for col in row:
+            line_str += col
+        print(line_str)
+
+
+def flood_fill(
+    map, col: int, row: int, max_col: int, max_row: int, find_char: str, new_char: str
+):
+    if row < 0 or row > max_row:
+        return
+    if col < 0 or col > max_col:
+        return
+    if map[row][col] != find_char or map[row][col] == new_char:
+        return
+
+    map[row][col] = new_char
+
+    # fill the surrounding locations
+    flood_fill(map, col - 1, row, max_col, max_row, find_char, new_char)
+    flood_fill(map, col + 1, row, max_col, max_row, find_char, new_char)
+    flood_fill(map, col, row - 1, max_col, max_row, find_char, new_char)
+    flood_fill(map, col, row + 1, max_col, max_row, find_char, new_char)
+
+
 def do_part_two(data_set):
-    pass
+    # print out the map with just the pipes, everything else is a dot.
+    # start from the outer boundary edges and flood fill any with .'s with 0s
+    # print out the map again and see how things look....
+    start = find_start(data_set)
+    print(f"Found start at {start}")
+    point_dict = build_point_dict(data_set)
+    start_node = Node(Pipe(start, ["N", "S", "E", "W"], "S"), None, "*")
+
+    # Assumes a square map.
+    width = len(data_set.splitlines()[0])
+    height = len(data_set.splitlines())
+
+    tree = build_tree(point_dict, start_node)
+
+    # create a blank map with .'s, then fill with the pipe symbols.
+    new_map = [["." for i in range(width)] for j in range(height)]
+
+    # fill the map with the pipes we found.
+    # In part 1 we created a tree thinking that may help for part 2.
+    # in reality, a list is easier to work with here.
+    pipe_list = tree_to_list(tree)
+    for p in pipe_list:
+        new_map[p.point.row][p.point.col] = p.char
+
+    printmap(new_map)
+
+    print("\n\n")
+    # go around the edges and for every "." found, do a flood fill operation
+    # top & bottom row
+    for col in range(width):
+        flood_fill(new_map, col, 0, width - 1, height - 1, ".", "0")
+        flood_fill(new_map, col, height - 1, width - 1, height - 1, ".", "0")
+    # leftmost & rightmost col
+    print("\n\n")
+    printmap(new_map)
+    for row in range(height):
+        flood_fill(new_map, 0, row, width - 1, height - 1, ".", "0")
+        flood_fill(new_map, width - 1, row, width - 1, height - 1, ".", "0")
+    print("\n\n")
+    printmap(new_map)
+
+
+# now need to find a way to track through the parallel pipes that are next to each other
 
 
 if __name__ == "__main__":
-    # data_set = input_data.day10_test_input
     data_set = input_data.day10_input
     sys.setrecursionlimit(50000)
 
-    do_part_one(data_set)
+    # do_part_one(data_set)
+
+    data_set = input_data.day10_input
     do_part_two(data_set)  # in progress
