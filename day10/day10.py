@@ -222,12 +222,51 @@ def do_part_two(data_set):
     # In part 1 we created a tree thinking that may help for part 2.
     # in reality, a list is easier to work with here.
     pipe_list = tree_to_list(tree)
+    # from inspection, the list will show up reversed from what we want in part 2
+    pipe_list.reverse()
     for p in pipe_list:
         new_map[p.point.row][p.point.col] = p.char
 
     printmap(new_map)
 
     print("\n\n")
+
+
+    # We can find the inner area by following the pipe loop clockwise and filling all .'s on the right 
+    # hand side of straight pipes (or alternatively counterlcokwise and left side)
+    # We don't need to fill the corner pieces since there won't be any spaces unless there are
+    # adjacent straight pipes.
+    for idx, p in enumerate(pipe_list[:-1]):
+        if p.char in ["-","|"]:
+            # (Ignore S, since we can tell it's not near an empty spot for this solution)
+            # look for a point to the right
+            # figure out which dierction we're going by looking at the next item. It will only ever be either a col or row change, not 
+            # both since we're only taking straight pieces
+            if pipe_list[idx].point.row < pipe_list[idx+1].point.row:
+                # going down: look col - 1
+                fill_col = pipe_list[idx].point.col -1
+                fill_row = pipe_list[idx].point.row
+            elif pipe_list[idx].point.row > pipe_list[idx+1].point.row:
+                # going up: look col + 1
+                fill_col = pipe_list[idx].point.col +1
+                fill_row = pipe_list[idx].point.row
+            else:
+                # cols are equal, we're going left or right
+                fill_col = pipe_list[idx].point.col
+                if pipe_list[idx].point.col < pipe_list[idx+1].point.col:
+                    # going right, so take the spot one row down
+                    fill_row = pipe_list[idx].point.row+1
+                else:
+                    fill_row = pipe_list[idx].point.row-1
+            flood_fill(new_map, fill_col, fill_row, width - 1, height - 1, ".", "I")
+
+    print("\n\n")
+    printmap(new_map)
+
+    # Code above does not seem to be working... and is filling the outside instead of the inside.
+    # Left 530 dots in the middle. Probably not the right answer.
+    
+    
     # go around the edges and for every "." found, do a flood fill operation
     # top & bottom row
     for col in range(width):
@@ -242,8 +281,6 @@ def do_part_two(data_set):
     print("\n\n")
     printmap(new_map)
 
-
-# now need to find a way to track through the parallel pipes that are next to each other
 
 
 if __name__ == "__main__":
