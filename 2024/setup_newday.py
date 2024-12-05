@@ -5,8 +5,8 @@ import aocd
 
 def create_new_day(day):
     # Define paths
-    template_folder = 'dayX'
-    new_day_folder = f'day-{day:02d}'
+    template_folder = '2024\\day-X'
+    new_day_folder = f'2024\\day-{day:02d}'
 
     # Create new day folder
     if not os.path.exists(new_day_folder):
@@ -34,7 +34,7 @@ def create_new_day(day):
 
 def downloadDay(day):
     data = aocd.get_data(day=day)
-    with open(f'day-{day:02d}/input.txt', 'w') as f:
+    with open(f'2024/day-{day:02d}/input.txt', 'w') as f:
         f.write(data)
 
 if __name__ == '__main__':
