@@ -30,6 +30,22 @@ def get_guard__start_pos(data):
                 return complex(row, col)
 
 
+def count_chars(data, char = 'X'):
+    char_count = 0
+    for row in range(len(data)):
+        for col in range(len(data[row])):
+            if data[row][col] == char:
+                char_count +=1
+    return char_count
+
+
+guard_char_map={
+    complex(-1, 0): "^",
+    complex(1, 0): "v",
+    complex(0, -1): "<",
+    complex(0, 1): ">",
+}
+
 def next_guard_pos(guard_char, pos):
     if guard_char == "^":
         return pos + complex(-1, 0)
@@ -41,6 +57,8 @@ def next_guard_pos(guard_char, pos):
         return pos + complex(0, 1)
     else:
         return pos
+
+
 
 
 def helper_function(data):
@@ -57,6 +75,7 @@ def update_animation(data, live, guard_pos, guard_char=None):
     rich_text = Text(str)
     if guard_char:
         rich_text.highlight_words(guard_char, style="red")
+    rich_text.highlight_words("#", style="green")
     live.update(rich_text)
 
 
@@ -68,51 +87,56 @@ def guard_on_board(data, guard_pos):
     return True
 
 
-def do_part_one(data):
+def do_part_one(data, animations = True):
     console = Console()
     with Live(console=console, refresh_per_second=10) as live:
 
         guard_pos = get_guard__start_pos(data)
-        guard_char = "^"
+        # start heading north from data inspection
+        guard_dir = complex(-1, 0)
+        guard_char = guard_char_map[guard_dir]
         print(guard_pos)
         # replace the guard position with an X marking it as a path
-        update_animation(data, live, guard_pos, guard_char)
+        if animations:
+            update_animation(data, live, guard_pos, guard_char)
         # for row in data:
         #     print("".join(row))
 
         # now we need to find the next guard position
         while guard_on_board(data, guard_pos):
-            update_animation(data, live, guard_pos, guard_char)
+            if animations:
+                update_animation(data, live, guard_pos, guard_char)
             # set current position to an X
             data[int(guard_pos.real)][int(guard_pos.imag)] = "X"
-            # get the next position
-            guard_next_pos = next_guard_pos(guard_char, guard_pos)
-            next_tile = data[int(guard_next_pos.real)][int(guard_next_pos.imag)]
+            # assume next tile is blocked unless we see otherwise
+            blocked = True
+            while blocked:
+                guard_next_pos = guard_pos + guard_dir
+                if guard_on_board(data, guard_next_pos):
+                    next_tile = data[int(guard_next_pos.real)][int(guard_next_pos.imag)]
+                    if next_tile == "#":
+                        # rotate 90 degrees and try again
+                        guard_dir *= complex(0,-1)
+                    else:
+                        blocked = False
+                else:
+                    break
 
             # get the next guard direction
-            guard_char = guard_char
+            guard_char = guard_char_map[guard_dir]
 
             # move the guard
             guard_pos = guard_next_pos
-            time.sleep(0)
+            if animations:
+                time.sleep(0.03)
 
         # guard has left the board
-        # data[int(guard_pos.real)][int(guard_pos.imag)] = "X"
         update_animation(data, live, guard_pos)
 
-        # next_pos = next_guard_pos("^", next_pos)
-        # time.sleep(1)
-        # data[2][6] = "X"
-        # next_pos = next_guard_pos("^", next_pos)
-        # update_animation(data, live, next_pos)
-        # time.sleep(1)
-        # data[1][1] = "X"
-        # next_pos = next_guard_pos("^", next_pos)
-        # update_animation(data, live, next_pos)
-        # time.sleep(1)
-        # data[8][8] = "X"
-        # next_pos = next_guard_pos("^", next_pos)
-        # update_animation(data, live, next_pos)
+    # count the number of X's - these are the number of visited spaces
+    num_visits = count_chars(data,"X")
+    print(f"\nPart 1:\n\tVisited {num_visits} spaces")    
+
 
 
 def do_part_two():
@@ -121,8 +145,8 @@ def do_part_two():
 
 if __name__ == "__main__":
     example_data = True
-    # example_data = False
+    example_data = False
     data = parse_data(example_data)
 
-    do_part_one(data)
+    do_part_one(data, animations=False)
     do_part_two()
