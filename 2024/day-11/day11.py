@@ -1,4 +1,4 @@
-import datetime
+from collections import Counter
 
 DAY = "day-11"
 
@@ -38,7 +38,7 @@ def process_stone(stone_val):
     return stone_val * 2024
 
 
-def do_part_one(stones, num_blinks=10, print_dbg=False):
+def do_part_one(stones, num_blinks=10):
     val = 0
     while num_blinks > 0:
         new_stones = []
@@ -51,78 +51,48 @@ def do_part_one(stones, num_blinks=10, print_dbg=False):
         stones = new_stones
         num_blinks -= 1
         # print(f"{blink}: {stones}")
-    if print_dbg:
-        print(f"\nPart 1:\n\tFound {len(stones)} stones")
+    print(f"\nPart 1:\n\tFound {len(stones)} stones")
     return len(stones)
 
 
-def do_part_two(stones, num_blinks=10, precomputed_2048 = {}, print_dbg = False):
-    stone_total_len = 0
+def do_part_two(stones, num_blinks=10):
+    stone_dict = {}
     blink_cnt = 0
-    while blink_cnt < num_blinks:
-        if len(stones) >= 1272620:
-            stone_num = 0
-            split = len(stones) // 2
-            stone_num += do_part_two(stones[:split], num_blinks-blink_cnt) + do_part_two(
-                stones[split:], num_blinks-blink_cnt
-            )
-            return stone_num
+    for stone in stones:
+        if stone in stone_dict:
+            stone_dict[stone] += 1
         else:
+            stone_dict[stone] = 1
+    while blink_cnt < num_blinks:
+        new_stone_dict = {}
+        for stone_val, stone_count in stone_dict.items():
             new_stones = []
-            for stone in stones:
-                new_stone = process_stone(stone)
-                if isinstance(new_stone, int):
-                    if new_stone == 2024:
-                        lookup_val = precomputed_2048.get(blink_cnt,None)
-                        if lookup_val is not None:
-                            stone_total_len += lookup_val
-                        else:
-                            new_stones.append(new_stone)
-                    else:
-                        new_stones.append(new_stone)
+            new_stone = process_stone(stone_val)
+            if isinstance(new_stone, int):
+                new_stones.append(new_stone)
+            else:
+                new_stones.extend(new_stone)
+            for new_stone in new_stones:
+                if new_stone in new_stone_dict:
+                    new_stone_dict[new_stone] += stone_count
                 else:
-                    new_stones.extend(new_stone)
-            stones = new_stones
+                    new_stone_dict[new_stone] = stone_count
+        stone_dict = new_stone_dict
         blink_cnt += 1
-        if print_dbg:
-            print(f"{num_blinks}: {len(stones)}, {stone_total_len}")
 
-    stone_total_len += len(stones)
-    return stone_total_len
-
-
-def pre_compute_2048s(max_blinks = 10):
-    precom_20248 = {}
-    blink_cnt = 0
-    while blink_cnt < max_blinks:
-        num_stones = do_part_two([2024], blink_cnt, precom_20248, print_dbg=True)
-        precom_20248[blink_cnt] = num_stones
-        blink_cnt +=1
-    return precom_20248
+    num_stones = 0
+    for stone_val, stone_count in stone_dict.items():
+        num_stones += stone_count
+    print(f"\nPart 2:\n\tFound {num_stones} stones")
+    return num_stones
 
 
 if __name__ == "__main__":
-    example_data = True
-    # example_data = False
+    # example_data = True
+    example_data = False
     data = parse_data(example_data)
 
-    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    do_part_one(data, 25, print_dbg=True)
+    do_part_one(data, 25)
 
-    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    print(f"\nPart 2:\n\tFound {do_part_two(data, 25)} stones")
-
-    print ("Pre computing....",end='')
-    pre_compute_2048s = pre_compute_2048s(75)
-    print ("done")
-
-    # do_part_one([2024], 5)
-    # do_part_one([2024], 6)
-
-    do_part_one(data, 6, print_dbg=True)
-    print(do_part_two(data, 25, pre_compute_2048s, print_dbg=True))
-
-    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    print(do_part_two(data, 75))
-    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    # do_part_one(data, 75)
+    do_part_two(data, 25)
+    do_part_two(data, 75)
