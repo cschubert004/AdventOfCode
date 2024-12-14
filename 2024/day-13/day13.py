@@ -109,9 +109,20 @@ def do_part_one(data:list[game]):
     print(f"\nPart 1:\n\tFound {tokens}")
 
 
-def do_part_two(data):
-    val = 0
-    print(f"\nPart 2:\n\tFound {val}")
+def do_part_two(data:list[game]):
+    tokens = 0
+    game_cnt = 1
+    for game in data:
+        game.prize= icomplex(game.prize.real +10000000000000, game.prize.imag +10000000000000)
+        solution = solve_game(game)
+        if solution is not None:
+            tokens_requierd = ((solution[0]*3)+solution[1])
+            tokens += tokens_requierd
+            print (f"Game:{game_cnt} - A:{solution[0]}, B:{solution[1]}, tokens = {tokens_requierd}")
+        else:
+            print (f"Game:{game_cnt} - no solution")
+        game_cnt +=1
+    print(f"\nPart 2:\n\tFound {tokens}")
 
 
 if __name__ == "__main__":
