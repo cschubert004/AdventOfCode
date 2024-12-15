@@ -1,5 +1,11 @@
+from rich.text import Text
+from rich.console import Console
+from rich.live import Live
 from copy import deepcopy
 DAY = "day-15" 
+
+CONSOLE = Console()
+LIVE = Live(console=CONSOLE)
 
 direction_complex_to_char_map={
     complex(-1, 0): "^",
@@ -66,40 +72,41 @@ def calc_boxes(mapdata):
 
 
 def do_part_one(mapdata, dirdata):
-    val = 0
-    robot_pos = get_start_pos(mapdata)
-    mapdata[int(robot_pos.real)][int(robot_pos.imag)] = "."
-    update_animation(mapdata, robot_pos)
-    for dirline in dirdata:
-        for dir in dirline.strip():
-            direction = direction_char_to_complex_map[dir]
-            next_pos= robot_pos + direction
-            char_at_next_pos = mapdata[int(next_pos.real)][int(next_pos.imag)]
-            # If it's a #, no action
-            # if it's a . (empty space), move
-            # if it's a O, see if we can push in that direction
-            if char_at_next_pos == "#":
-                pass
-            elif char_at_next_pos == ".":
-                robot_pos = next_pos
-            elif char_at_next_pos == "O":
-                gap_pos = search_direction(mapdata, next_pos, direction)
-                if gap_pos is not None:
-                    # TOTO move stones on map
-                    push_pos = next_pos
-                    while push_pos != gap_pos+direction:
-                        mapdata[int(push_pos.real)][int(push_pos.imag)] = "O"
-                        push_pos += direction
-                    mapdata[int(next_pos.real)][int(next_pos.imag)] = "."
-                    robot_pos = next_pos
-                else:
-                    # Don't move
+    console = Console()
+    with Live(console=console, refresh_per_second=10) as live:
+        robot_pos = get_start_pos(mapdata)
+        mapdata[int(robot_pos.real)][int(robot_pos.imag)] = "."
+        update_animation(live, mapdata, robot_pos)
+        for dirline in dirdata:
+            for dir in dirline.strip():
+                direction = direction_char_to_complex_map[dir]
+                next_pos= robot_pos + direction
+                char_at_next_pos = mapdata[int(next_pos.real)][int(next_pos.imag)]
+                # If it's a #, no action
+                # if it's a . (empty space), move
+                # if it's a O, see if we can push in that direction
+                if char_at_next_pos == "#":
                     pass
-            else:
-                raise NotImplemented()
-            
-            
-            #update_animation(mapdata, robot_pos)
+                elif char_at_next_pos == ".":
+                    robot_pos = next_pos
+                elif char_at_next_pos == "O":
+                    gap_pos = search_direction(mapdata, next_pos, direction)
+                    if gap_pos is not None:
+                        # TOTO move stones on map
+                        push_pos = next_pos
+                        while push_pos != gap_pos+direction:
+                            mapdata[int(push_pos.real)][int(push_pos.imag)] = "O"
+                            push_pos += direction
+                        mapdata[int(next_pos.real)][int(next_pos.imag)] = "."
+                        robot_pos = next_pos
+                    else:
+                        # Don't move
+                        pass
+                else:
+                    raise NotImplemented()
+                
+                
+                update_animation(live, mapdata, robot_pos)
         
     print(f"\nPart 1:\n\tFound {calc_boxes(mapdata)}")
 
@@ -109,13 +116,18 @@ def do_part_two(mapdata, dirdata):
     print(f"\nPart 2:\n\tFound {val}")
 
 
-def update_animation(data, guard_pos):
+def update_animation(live, data, guard_pos):
     print_data = deepcopy(data)
     print_data[int(guard_pos.real)][int(guard_pos.imag)] = "@"
     str = ""
     for row in print_data:
         str += "".join(row) + "\n"
-    print (str)
+    #print (str)
+    rich_text = Text(str)
+    rich_text.highlight_words("#", style="green")
+    rich_text.highlight_words("O", style="yellow")
+    rich_text.highlight_words("@", style="red")
+    live.update(rich_text)    
 
 
 if __name__ == "__main__":
