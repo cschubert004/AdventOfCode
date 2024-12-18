@@ -28,6 +28,16 @@ def create_new_day(day):
 
             # Copy non-template files
             shutil.copy(template_path, new_file_path)
+        
+    template_file = os.path.join(target_dir, "dayX.py")
+    with open(template_file) as python_file:
+        content = python_file.read()
+
+    with open(template_file, "w") as python_file:
+        content = content.replace(r'DAY = "day-03"', f"DAY = \"day-{day:02d}\"")
+        python_file.write(content)
+
+    shutil.move(template_file, os.path.join(target_dir, f"day{day:d}.py"))
 
     print(f'New day created: {new_day_folder}')
 

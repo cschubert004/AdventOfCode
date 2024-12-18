@@ -1,4 +1,4 @@
-DAY = "day-03"
+DAY = "day-17"
 
 
 def parse_data(example=False):
@@ -6,9 +6,7 @@ def parse_data(example=False):
     if example:
         filname = f"2024\\{DAY}\\input_example.txt"
     with open(filname, encoding="utf-8") as input_file:
-        lines = input_file.readlines()
-    
-    return lines
+        return input_file.readlines()
 
 
 def helper_function(data):
