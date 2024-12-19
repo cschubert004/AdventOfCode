@@ -1,4 +1,10 @@
 import re
+import sys
+from functools import partial
+from itertools import repeat
+import multiprocessing
+from multiprocessing import Pool
+
 
 DAY = "day-17"
 
@@ -58,7 +64,7 @@ def run_opcode(program: list[int], a_val: int, b_val: int, c_val: int, i_ptr: in
     return a, b, c, i, output
 
 
-def do_part_one(data):
+def do_part_one(data, output_match=False):
     a = data[0]
     b = data[1]
     c = data[2]
@@ -73,11 +79,55 @@ def do_part_one(data):
         output_vals.extend(output)
         print(f"{instr} {operand} {a} {b} {c} {i} {output}")
         inst_ptr = i
-    print(f"\nPart 1:\n\tFound {output_vals}")
+
+        output_str = ",".join([str(val) for val in output_vals])
+        if output_match:
+            if not data[3].startswith(output_str):
+                # return early if it's not possible to match
+                return output_str
+    return output_str
 
 
-def do_part_two(data):
-    val = 0
+def check_value(a, prog_string):
+    if a % 100000 == 0:
+        print(f"Checking {a}")
+    calulated_program_str = do_part_one([a, 0, 0, prog_string], True)
+    if calulated_program_str == prog_string:
+        return a
+    return None
+
+
+# def do_part_two(data, print_debug=False):
+#     prog_string = data[3]
+#     # v2 = zip(range(100), repeat((prog_string)))
+#     # with Pool(processes=multiprocessing.cpu_count()) as pool:
+#     with Pool(processes=3) as pool:
+#         for result in pool.starmap(
+#             check_value, zip(range(sys.maxsize), repeat((prog_string)))
+#         ):
+#             if result is not None:
+#                 val = result
+#                 break
+#     print(f"\nPart 2:\n\tFound {val}")
+
+
+def do_part_two(data, print_debug=False):
+    # from code inspection, we only need the program string
+    prog_string = data[3]
+    for a in range(sys.maxsize):
+        if print_debug and a % 100000 == 0:
+            print(f"Checking {a}")
+        # if a == 117440:
+        #     print("should solve")
+        calulated_program_str = do_part_one([a, 0, 0, prog_string], True)
+        if calulated_program_str == prog_string:
+            val = a
+            break
+        elif len(calulated_program_str) > 11:
+            print(
+                f"Partial solution with a:{a}, returned program: {calulated_program_str}, start program: {prog_string}"
+            )
+
     print(f"\nPart 2:\n\tFound {val}")
 
 
@@ -94,11 +144,17 @@ if __name__ == "__main__":
     do_test()
 
     example_data = True
-    # example_data = False
+    example_data = False
     data = parse_data(example_data)
 
-    # another example
+    # another part 1 example
     # data = [2024, 0, 0, "0,1,5,4,3,0"]
 
-    do_part_one(data)
-    do_part_two(data)
+    p1_str = do_part_one(data)
+    print(f"\nPart 1:\n\tFound {p1_str}")
+
+    # part 2 example
+    # data = [2024, 0, 0, "0,3,5,4,3,0"]
+
+    # Previous testing indicates that 1 to 1204200000 is not a solution.
+    do_part_two(data, print_debug=True)
