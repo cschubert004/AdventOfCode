@@ -77,7 +77,7 @@ def do_part_one(data, output_match=False):
         operand = int(program[inst_ptr + 1])
         a, b, c, i, output = run_opcode([instr, operand], a, b, c, inst_ptr)
         output_vals.extend(output)
-        print(f"{instr} {operand} {a} {b} {c} {i} {output}")
+        #print(f"{instr} {operand} {a} {b} {c} {i} {output}")
         inst_ptr = i
 
         output_str = ",".join([str(val) for val in output_vals])
@@ -114,7 +114,7 @@ def check_value(a, prog_string):
 def do_part_two(data, print_debug=False):
     # from code inspection, we only need the program string
     prog_string = data[3]
-    for a in range(sys.maxsize):
+    for a in range(1204200000,sys.maxsize):
         if print_debug and a % 100000 == 0:
             print(f"Checking {a}")
         # if a == 117440:
